@@ -1,0 +1,15 @@
+<ng-container>
+  <input
+    [placeholder]="'Search by characters'"
+    (keyup)="changeCharactersInput($event)"
+  />
+  <ng-container>
+    <div>
+      <div *ngIf="input$ | async as charactersInput">
+        <!--  -->
+        {{ charactersInput }}
+      </div>
+    </div>
+    <ng-template #noResults> No results </ng-template>
+  </ng-container>
+</ng-container>
