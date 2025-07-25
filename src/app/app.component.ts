@@ -1,17 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
+  BehaviorSubject,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
   forkJoin,
   map,
+  mergeMap,
   Observable,
+  of,
   Subject,
   Subscription,
   switchMap,
 } from 'rxjs';
 import { MockDataService } from './mock-data.service';
+import { CountriesStoreService } from './services/countries-store.service';
 
 @Component({
   selector: 'app-root',
@@ -24,12 +28,49 @@ export class AppComponent implements OnInit, OnDestroy {
   planetAndCharactersResults$!: Observable<any>;
   isLoading: boolean = false;
   subscriptions: Subscription[] = [];
+  title = 'experimentation';
+  countries$: Observable<any[]> = this.countriesStoreService.countries$;
+  isLoading$: Observable<boolean> = this.countriesStoreService.isLoading$;
+  searchTerm$ = new BehaviorSubject('');
+  private destroy$ = new Subject<void>();
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(
+    private countriesStoreService: CountriesStoreService,
+    private mockDataService: MockDataService
+  ) {}
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.initLoadingState();
     this.initCharacterEvents();
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        map((term) => term.toLowerCase().trim()),
+        distinctUntilChanged()
+      )
+      .subscribe((term) => {
+        if (term) {
+          this.countriesStoreService.getCountriesByName(term);
+        } else {
+          this.countriesStoreService.getAllCountries();
+        }
+      });
+
+    const test$ = of(1, 2, 3);
+    const test2$ = of('a', 'b', 'c');
+    test$
+      .pipe(
+        mergeMap((num: any) => {
+          return test2$.pipe(map((letter) => `${num}${letter}`));
+        })
+      )
+      .subscribe((value) => {
+        console.log(value);
+      });
+  }
+
+  onSearch(event: any) {
+    this.searchTerm$.next(event.target.value);
   }
 
   changeCharactersInput(element: any): void {
